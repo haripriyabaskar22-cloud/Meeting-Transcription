@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Transcription Tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr auto;
+            gap: 0;
+        }
+        
+        .header {
+            grid-column: 1 / -1;
+            background: linear-gradient(90deg, #3a7bd5 0%, #00d2ff 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.4rem;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .controls-panel {
+            padding: 30px;
+            background-color: #f8fafc;
+            border-right: 1px solid #eaeaea;
+        }
+        
+        .transcription-panel {
+            padding: 30px;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-title {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel-title i {
+            color: #3a7bd5;
+        }
+        
+        .recording-controls {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            min-width: 160px;
+        }
+        
+        .btn-record {
+            background-color: #e53e3e;
+            color: white;
+        }
+        
+        .btn-record:hover:not(:disabled) {
+            background-color: #c53030;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(229, 62, 62, 0.3);
+        }
+        
+        .btn-stop {
+            background-color: #4a5568;
+            color: white;
+        }
+        
+        .btn-stop:hover:not(:disabled) {
+            background-color: #2d3748;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(74, 85, 104, 0.3);
+        }
+        
+        .btn-clear {
+            background-color: #edf2f7;
+            color: #4a5568;
+        }
+        
+        .btn-clear:hover:not(:disabled) {
+            background-color: #e2e8f0;
+            transform: translateY(-3px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .recording-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            background-color: #fef2f2;
+            color: #991b1b;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .recording-status.active {
+            opacity: 1;
+        }
+        
+        .pulse-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #e53e3e;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.7; }
+        }
+        
+        .settings {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .setting-item {
+            margin-bottom: 20px;
+        }
+        
+        .setting-item label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: #f8fafc;
+            transition: border 0.3s;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #3a7bd5;
+            background-color: white;
+        }
+        
+        .transcription-output {
+            flex-grow: 1;
+            background-color: #f8fafc;
+            border-radius: 15px;
+            padding: 25px;
+            overflow-y: auto;
+            max-height: 500px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 25px;
+        }
+        
+        .transcription-line {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        
+        .speaker {
+            font-weight: 700;
+            color: #3a7bd5;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .time {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-left: 10px;
+        }
+        
+        .text {
+            line-height: 1.5;
+            color: #2d3748;
+        }
+        
+        .transcription-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn-save {
+            background-color: #38a169;
+            color: white;
+            flex-grow: 1;
+        }
+        
+        .btn-save:hover:not(:disabled) {
+            background-color: #2f855a;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(56, 161, 105, 0.3);
+        }
+        
+        .btn-copy {
+            background-color: #d69e2e;
+            color: white;
+            flex-grow: 1;
+        }
+        
+        .btn-copy:hover:not(:disabled) {
+            background-color: #b7791f;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(214, 158, 46, 0.3);
+        }
+        
+        .footer {
+            grid-column: 1 / -1;
+            background-color: #f8fafc;
+            padding: 20px;
+            text-align: center;
+            color: #718096;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background-color: #38a169;
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .browser-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .browser-warning.show {
+            display: block;
+        }
+        
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr auto;
+            }
+            
+            .controls-panel {
+                border-right: none;
+                border-bottom: 1px solid #eaeaea;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .control-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .transcription-actions {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-microphone-alt"></i> Meeting Transcription Tool</h1>
+            <p>Record your meetings and get automatic transcriptions using speech recognition</p>
+        </div>
+        
+        <div class="controls-panel">
+            <h2 class="panel-title"><i class="fas fa-sliders-h"></i> Controls & Settings</h2>
+            
+            <div class="recording-controls">
+                <h3>Recording Controls</h3>
+                <div class="control-buttons">
+                    <button id="recordBtn" class="btn btn-record">
+                        <i class="fas fa-microphone"></i> Start Recording
+                    </button>
+                    <button id="stopBtn" class="btn btn-stop" disabled>
+                        <i class="fas fa-stop"></i> Stop Recording
+                    </button>
+                    <button id="clearBtn" class="btn btn-clear">
+                        <i class="fas fa-trash-alt"></i> Clear All
+                    </button>
+                </div>
+                
+                <div id="recordingStatus" class="recording-status">
+                    <div class="pulse-dot"></div>
+                    <span>Recording in progress...</span>
+                </div>
+                
+                <div id="browserWarning" class="browser-warning">
+                    <p><strong>Note:</strong> The Web Speech API requires a secure context (HTTPS) or localhost. For the best experience, please:</p>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li>Use Chrome/Edge browser</li>
+                        <li>Open this page via HTTPS or localhost</li>
+                        <li>Allow microphone access when prompted</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="settings">
+                <h3>Transcription Settings</h3>
+                <div class="setting-item">
+                    <label for="languageSelect"><i class="fas fa-language"></i> Language</label>
+                    <select id="languageSelect">
+                        <option value="en-US">English (US)</option>
+                        <option value="en-GB">English (UK)</option>
+                        <option value="es-ES">Spanish</option>
+                        <option value="fr-FR">French</option>
+                        <option value="de-DE">German</option>
+                        <option value="it-IT">Italian</option>
+                    </select>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="speakerName"><i class="fas fa-user"></i> Speaker Name</label>
+                    <input type="text" id="speakerName" placeholder="Enter speaker name" value="Speaker 1">
+                </div>
+                
+                <div class="setting-item">
+                    <label><i class="fas fa-bolt"></i> Demo Mode (for testing)</label>
+                    <div style="margin-top: 10px;">
+                        <button id="demoBtn" class="btn" style="background-color: #805ad5; color: white; width: 100%;">
+                            <i class="fas fa-play"></i> Start Demo Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="transcription-panel">
+            <h2 class="panel-title"><i class="fas fa-file-alt"></i> Live Transcription</h2>
+            
+            <div id="transcriptionOutput" class="transcription-output">
+                <div class="transcription-line">
+                    <div class="speaker">System <span class="time">Just now</span></div>
+                    <div class="text">Click "Start Recording" to begin transcribing your meeting. The transcription will appear here in real-time.</div>
+                </div>
+                
+                <div class="transcription-line">
+                    <div class="speaker">System <span class="time">Just now</span></div>
+                    <div class="text">Make sure to allow microphone access when prompted by your browser.</div>
+                </div>
+                
+                <div class="transcription-line">
+                    <div class="speaker">System <span class="time">Just now</span></div>
+                    <div class="text">If speech recognition doesn't work, try the "Demo Mode" button to simulate a transcription.</div>
+                </div>
+            </div>
+            
+            <div class="transcription-actions">
+                <button id="saveBtn" class="btn btn-save">
+                    <i class="fas fa-save"></i> Save Transcription
+                </button>
+                <button id="copyBtn" class="btn btn-copy">
+                    <i class="fas fa-copy"></i> Copy to Clipboard
+                </button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Meeting Transcription Tool &copy; 2023 | Uses Web Speech API for real-time transcription</p>
+            <p><i class="fas fa-info-circle"></i> Note: For speech recognition to work, please use Chrome/Edge on HTTPS or localhost</p>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification">Notification</div>
+
+    <script>
+        // DOM Elements
+        const recordBtn = document.getElementById('recordBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const demoBtn = document.getElementById('demoBtn');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const transcriptionOutput = document.getElementById('transcriptionOutput');
+        const languageSelect = document.getElementById('languageSelect');
+        const speakerNameInput = document.getElementById('speakerName');
+        const browserWarning = document.getElementById('browserWarning');
+        const notification = document.getElementById('notification');
+        
+        // Speech Recognition Variables
+        let recognition = null;
+        let isRecording = false;
+        let isDemoMode = false;
+        let demoInterval = null;
+        let transcriptions = [];
+        let currentTranscription = '';
+        let interimTranscription = '';
+        
+        // Check for browser support and initialize
+        function initializeSpeechRecognition() {
+            // Check if we're on a secure context
+            const isSecureContext = window.isSecureContext || 
+                                   window.location.protocol === 'https:' || 
+                                   window.location.hostname === 'localhost' || 
+                                   window.location.hostname === '127.0.0.1';
+            
+            if (!isSecureContext) {
+                browserWarning.classList.add('show');
+                showNotification('Speech recognition works best on HTTPS or localhost. Using demo mode.', 'warning');
+                setupDemoMode();
+                return;
+            }
+            
+            // Check for SpeechRecognition API support
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!window.SpeechRecognition) {
+                showNotification('Speech recognition is not supported in this browser. Using demo mode.', 'error');
+                browserWarning.classList.add('show');
+                setupDemoMode();
+                return;
+            }
+            
+            // Initialize speech recognition
+            try {
+                recognition = new SpeechRecognition();
+                setupRecognition();
+                showNotification('Speech recognition is ready. Click "Start Recording" to begin.', 'success');
+            } catch (error) {
+                console.error('Error initializing speech recognition:', error);
+                showNotification('Error initializing speech recognition. Using demo mode.', 'error');
+                setupDemoMode();
+            }
+        }
+        
+        // Setup speech recognition
+        function setupRecognition() {
+            if (!recognition) return;
+            
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = languageSelect.value;
+            recognition.maxAlternatives = 1;
+            
+            recognition.onstart = function() {
+                isRecording = true;
+                recordBtn.disabled = true;
+                stopBtn.disabled = false;
+                recordingStatus.classList.add('active');
+                showNotification('Recording started. Speak now...', 'success');
+            };
+            
+            recognition.onresult = function(event) {
+                interimTranscription = '';
+                currentTranscription = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    
+                    if (event.results[i].isFinal) {
+                        currentTranscription += transcript;
+                    } else {
+                        interimTranscription += transcript;
+                    }
+                }
+                
+                // Update the transcription display
+                updateTranscriptionDisplay();
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error', event.error);
+                
+                if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                    showNotification('Microphone access denied. Please allow microphone access to use this tool.', 'error');
+                    browserWarning.classList.add('show');
+                } else if (event.error === 'no-speech') {
+                    // No speech detected, but don't show error
+                    console.log('No speech detected');
+                } else {
+                    showNotification(`Speech recognition error: ${event.error}. Using demo mode.`, 'error');
+                    setupDemoMode();
+                }
+                
+                stopRecording();
+            };
+            
+            recognition.onend = function() {
+                if (isRecording && !isDemoMode) {
+                    // If recording was manually stopped, don't restart
+                    if (currentTranscription || interimTranscription) {
+                        saveCurrentTranscription();
+                    }
+                    
+                    // Try to restart if we're still in recording mode
+                    try {
+                        if (isRecording) {
+                            recognition.start();
+                        }
+                    } catch (error) {
+                        console.error('Error restarting recognition:', error);
+                        stopRecording();
+                    }
+                } else {
+                    // Clean stop
+                    if (currentTranscription || interimTranscription) {
+                        saveCurrentTranscription();
+                    }
+                }
+            };
+        }
+        
+        // Setup demo mode (simulated transcription)
+        function setupDemoMode() {
+            isDemoMode = true;
+            demoBtn.innerHTML = '<i class="fas fa-stop"></i> Stop Demo Mode';
+            demoBtn.style.backgroundColor = '#e53e3e';
+            
+            // Show a message that we're in demo mode
+            const demoMessage = document.createElement('div');
+            demoMessage.className = 'transcription-line';
+            demoMessage.innerHTML = `
+                <div class="speaker">System <span class="time">Just now</span></div>
+                <div class="text"><strong>Demo Mode Active:</strong> Speech recognition is not available in your current browser/context. This is a simulation of how the transcription would work.</div>
+            `;
+            transcriptionOutput.appendChild(demoMessage);
+            
+            // Start demo transcription
+            startDemoTranscription();
+        }
+        
+        // Start demo transcription simulation
+        function startDemoTranscription() {
+            if (!isDemoMode) return;
+            
+            isRecording = true;
+            recordBtn.disabled = true;
+            stopBtn.disabled = false;
+            recordingStatus.classList.add('active');
+            showNotification('Demo mode started. Simulating transcription...', 'info');
+            
+            // Demo transcript samples
+            const demoTranscripts = [
+                "Welcome everyone to our weekly team meeting.",
+                "Let's start by reviewing the project milestones from last week.",
+                "The frontend development is ahead of schedule by two days.",
+                "However, we're facing some challenges with the backend API integration.",
+                "The QA team has completed testing on module three.",
+                "We need to prioritize the bug fixes before the next release.",
+                "Marketing has requested some new features for the upcoming campaign.",
+                "Let's discuss the timeline for these additional requirements."
+            ];
+            
+            let transcriptIndex = 0;
+            
+            demoInterval = setInterval(() => {
+                if (transcriptIndex < demoTranscripts.length && isRecording) {
+                    // Simulate receiving a transcription
+                    currentTranscription = demoTranscripts[transcriptIndex];
+                    saveCurrentTranscription();
+                    
+                    // Add a random speaker
+                    const speakers = ['Alex Johnson', 'Maria Rodriguez', 'David Chen', 'Sarah Williams'];
+                    speakerNameInput.value = speakers[Math.floor(Math.random() * speakers.length)];
+                    
+                    transcriptIndex++;
+                    
+                    // If we've gone through all transcripts, loop back
+                    if (transcriptIndex >= demoTranscripts.length) {
+                        transcriptIndex = 0;
+                    }
+                }
+            }, 4000); // Add a new transcript every 4 seconds
+        }
+        
+        // Stop demo mode
+        function stopDemoMode() {
+            if (demoInterval) {
+                clearInterval(demoInterval);
+                demoInterval = null;
+            }
+            
+            isDemoMode = false;
+            demoBtn.innerHTML = '<i class="fas fa-play"></i> Start Demo Mode';
+            demoBtn.style.backgroundColor = '#805ad5';
+        }
+        
+        // Update the transcription display
+        function updateTranscriptionDisplay() {
+            // Clear the output
+            transcriptionOutput.innerHTML = '';
+            
+            // Add previous transcriptions
+            transcriptions.forEach(transcription => {
+                const transcriptionLine = document.createElement('div');
+                transcriptionLine.className = 'transcription-line';
+                
+                const speakerElement = document.createElement('div');
+                speakerElement.className = 'speaker';
+                speakerElement.innerHTML = `${transcription.speaker} <span class="time">${formatTime(transcription.timestamp)}</span>`;
+                
+                const textElement = document.createElement('div');
+                textElement.className = 'text';
+                textElement.textContent = transcription.text;
+                
+                transcriptionLine.appendChild(speakerElement);
+                transcriptionLine.appendChild(textElement);
+                transcriptionOutput.appendChild(transcriptionLine);
+            });
+            
+            // Add current transcription if exists
+            if (currentTranscription || interimTranscription) {
+                const transcriptionLine = document.createElement('div');
+                transcriptionLine.className = 'transcription-line';
+                transcriptionLine.style.backgroundColor = 'rgba(56, 161, 105, 0.05)';
+                transcriptionLine.style.borderRadius = '8px';
+                transcriptionLine.style.padding = '15px';
+                
+                const speakerElement = document.createElement('div');
+                speakerElement.className = 'speaker';
+                speakerElement.innerHTML = `${speakerNameInput.value || 'Speaker'} <span class="time">Now</span>`;
+                
+                const textElement = document.createElement('div');
+                textElement.className = 'text';
+                textElement.textContent = currentTranscription || interimTranscription;
+                
+                if (!currentTranscription && interimTranscription) {
+                    textElement.style.fontStyle = 'italic';
+                    textElement.style.color = '#718096';
+                }
+                
+                transcriptionLine.appendChild(speakerElement);
+                transcriptionLine.appendChild(textElement);
+                transcriptionOutput.appendChild(transcriptionLine);
+            }
+            
+            // Scroll to the bottom
+            transcriptionOutput.scrollTop = transcriptionOutput.scrollHeight;
+        }
+        
+        // Save current transcription to the transcriptions array
+        function saveCurrentTranscription() {
+            const textToSave = (currentTranscription || interimTranscription).trim();
+            
+            if (textToSave) {
+                transcriptions.push({
+                    speaker: speakerNameInput.value || 'Speaker',
+                    text: textToSave,
+                    timestamp: new Date()
+                });
+                
+                currentTranscription = '';
+                interimTranscription = '';
+                updateTranscriptionDisplay();
+            }
+        }
+        
+        // Start recording
+        function startRecording() {
+            if (isDemoMode) {
+                showNotification('Already in demo mode. Click "Stop Recording" to end.', 'info');
+                return;
+            }
+            
+            if (!recognition) {
+                showNotification('Speech recognition not available. Using demo mode instead.', 'warning');
+                setupDemoMode();
+                return;
+            }
+            
+            try {
+                // Request microphone permission first
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        // We have permission, now start recognition
+                        setupRecognition();
+                        recognition.start();
+                        
+                        // Stop the microphone stream since recognition will handle it
+                        stream.getTracks().forEach(track => track.stop());
+                    })
+                    .catch(error => {
+                        console.error('Error accessing microphone:', error);
+                        showNotification('Microphone access denied. Using demo mode instead.', 'error');
+                        setupDemoMode();
+                    });
+            } catch (error) {
+                console.error('Error starting recording:', error);
+                showNotification('Error starting recording. Using demo mode instead.', 'error');
+                setupDemoMode();
+            }
+        }
+        
+        // Stop recording
+        function stopRecording() {
+            if (isDemoMode) {
+                stopDemoMode();
+            } else if (recognition && isRecording) {
+                try {
+                    recognition.stop();
+                } catch (error) {
+                    console.error('Error stopping recognition:', error);
+                }
+            }
+            
+            isRecording = false;
+            recordBtn.disabled = false;
+            stopBtn.disabled = true;
+            recordingStatus.classList.remove('active');
+            
+            if (currentTranscription || interimTranscription) {
+                saveCurrentTranscription();
+            }
+            
+            showNotification('Recording stopped.', 'info');
+        }
+        
+        // Clear all transcriptions
+        function clearTranscriptions() {
+            if (isRecording) {
+                showNotification('Please stop recording before clearing transcriptions.', 'warning');
+                return;
+            }
+            
+            transcriptions = [];
+            currentTranscription = '';
+            interimTranscription = '';
+            
+            // Reset to default message
+            transcriptionOutput.innerHTML = `
+                <div class="transcription-line">
+                    <div class="speaker">System <span class="time">Just now</span></div>
+                    <div class="text">Click "Start Recording" to begin transcribing your meeting. The transcription will appear here in real-time.</div>
+                </div>
+                
+                <div class="transcription-line">
+                    <div class="speaker">System <span class="time">Just now</span></div>
+                    <div class="text">Make sure to allow microphone access when prompted by your browser.</div>
+                </div>
+                
+                <div class="transcription-line">
+                    <div class="speaker">System <span class="time">Just now</span></div>
+                    <div class="text">If speech recognition doesn't work, try the "Demo Mode" button to simulate a transcription.</div>
+                </div>
+            `;
+            
+            showNotification('All transcriptions cleared.', 'info');
+        }
+        
+        // Save transcription to a file
+        function saveTranscription() {
+            if (transcriptions.length === 0 && !currentTranscription) {
+                showNotification('No transcription to save.', 'warning');
+                return;
+            }
+            
+            // Save current transcription if exists
+            if (currentTranscription || interimTranscription) {
+                saveCurrentTranscription();
+            }
+            
+            let transcriptText = 'MEETING TRANSCRIPTION\n';
+            transcriptText += '=====================\n\n';
+            transcriptText += `Date: ${new Date().toLocaleDateString()}\n`;
+            transcriptText += `Time: ${new Date().toLocaleTimeString()}\n`;
+            transcriptText += `Total Entries: ${transcriptions.length}\n\n`;
+            transcriptText += 'TRANSCRIPTION:\n';
+            transcriptText += '==============\n\n';
+            
+            transcriptions.forEach((transcription, index) => {
+                transcriptText += `${index + 1}. [${formatTime(transcription.timestamp)}] ${transcription.speaker}:\n`;
+                transcriptText += `   ${transcription.text}\n\n`;
+            });
+            
+            const blob = new Blob([transcriptText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `meeting-transcription-${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Transcription saved successfully!', 'success');
+        }
+        
+        // Copy transcription to clipboard
+        function copyTranscription() {
+            if (transcriptions.length === 0 && !currentTranscription) {
+                showNotification('No transcription to copy.', 'warning');
+                return;
+            }
+            
+            // Save current transcription if exists
+            if (currentTranscription || interimTranscription) {
+                saveCurrentTranscription();
+            }
+            
+            let transcriptText = `Meeting Transcription - ${new Date().toLocaleDateString()}\n\n`;
+            
+            transcriptions.forEach((transcription, index) => {
+                transcriptText += `[${formatTime(transcription.timestamp)}] ${transcription.speaker}: ${transcription.text}\n`;
+            });
+            
+            navigator.clipboard.writeText(transcriptText)
+                .then(() => {
+                    showNotification('Transcription copied to clipboard!', 'success');
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    // Fallback method for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = transcriptText;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showNotification('Transcription copied to clipboard!', 'success');
+                });
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            notification.textContent = message;
+            
+            // Set color based on type
+            if (type === 'error') {
+                notification.style.backgroundColor = '#e53e3e';
+            } else if (type === 'success') {
+                notification.style.backgroundColor = '#38a169';
+            } else if (type === 'warning') {
+                notification.style.backgroundColor = '#d69e2e';
+            } else {
+                notification.style.backgroundColor = '#3a7bd5';
+            }
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Format time to HH:MM:SS
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        
+        // Event Listeners
+        recordBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+        clearBtn.addEventListener('click', clearTranscriptions);
+        saveBtn.addEventListener('click', saveTranscription);
+        copyBtn.addEventListener('click', copyTranscription);
+        demoBtn.addEventListener('click', function() {
+            if (isDemoMode) {
+                stopDemoMode();
+                stopRecording();
+            } else {
+                if (isRecording) {
+                    stopRecording();
+                }
+                setupDemoMode();
+            }
+        });
+        
+        // Update settings when changed
+        languageSelect.addEventListener('change', function() {
+            if (recognition) {
+                recognition.lang = this.value;
+            }
+        });
+        
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeSpeechRecognition();
+            
+            // Add some sample transcriptions for demo purposes
+            transcriptions = [
+                {
+                    speaker: "Alex Johnson",
+                    text: "Let's start the meeting by reviewing last quarter's results.",
+                    timestamp: new Date(Date.now() - 15 * 60000)
+                },
+                {
+                    speaker: "Maria Rodriguez",
+                    text: "I've prepared the sales report. We saw a 15% increase compared to the previous quarter.",
+                    timestamp: new Date(Date.now() - 12 * 60000)
+                },
+                {
+                    speaker: "David Chen",
+                    text: "That's excellent news. Which regions performed the best?",
+                    timestamp: new Date(Date.now() - 10 * 60000)
+                }
+            ];
+            
+            updateTranscriptionDisplay();
+        });
+    </script>
+</body>
+</html>
